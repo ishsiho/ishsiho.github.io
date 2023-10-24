@@ -1,0 +1,260 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+<meta name="description" content=""/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<title>记录docker搭建YouTube订阅同步podsync容器遇到的一些坑 | PureText</title>
+
+<link rel="shortcut icon" href="https://ishsiho.github.io/favicon.ico?v=1698150415233">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://ishsiho.github.io/styles/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/languages/dart.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script>
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <div class="navbar-brand">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            PureText
+        </div>
+    </div>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+                <div class="nav-item">
+                    
+                        <a href="/" class="menu gt-a-link">
+                            首页
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/archives" class="menu gt-a-link">
+                            归档
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/tags" class="menu gt-a-link">
+                            标签
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/post/about" class="menu gt-a-link">
+                            关于
+                        </a>
+                    
+                </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1698150415233" action="/search/index.html">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    记录docker搭建YouTube订阅同步podsync容器遇到的一些坑
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2021-05-30 ·
+                    </time>
+                    
+                        <a href="https://ishsiho.github.io/tag/F4ND9S_OY/" class="post-tags">
+                            # youtube
+                        </a>
+                    
+                        <a href="https://ishsiho.github.io/tag/RssHeMDB5i/" class="post-tags">
+                            # podsync
+                        </a>
+                    
+                        <a href="https://ishsiho.github.io/tag/uXPlB5DfF/" class="post-tags">
+                            # docker
+                        </a>
+                    
+                        <a href="https://ishsiho.github.io/tag/9DVTgDHXgw/" class="post-tags">
+                            # 群晖
+                        </a>
+                    
+                </div>
+                <div class="post-content">
+                    <p>🪧🪧✉️✉️You can touch me with  <a href="https://t.me/ishsiho" title="TG@ishsiho">Telegram:@Hsi Ho</a>.</p>
+<hr>
+<h1 id="podsync容器">podsync容器</h1>
+<p>GitHub项目地址：<a href="https://github.com/mxpv/podsync" title="mxpv/podsync">https://github.com/mxpv/podsync</a><br>
+podsync 容器，简单来说就是一个集成了youtube-dl的podcast服务容器，可以把YouTube的频道或者列表视频，按照预定好的时间频率不断刷新然后下载下来，然后生成<strong>泛播客</strong>订阅。<br>
+<img src="https://ishsiho.github.io/post-images/1622344133426.png" alt="" loading="lazy"><br>
+如上图，即是podsync生成的苏通河牛通YouTube channel的rss订阅文件，其中红框框起来的item，就是一期视频。整个rss文件包括了频道信息，youtuber的简介信息，每一期视频标题跟简介。而且已经将每一期的视频下载到了服务器的本地上，因此只需要服务器可以连接到YouTube网站，其他设备连接到这台服务器则不需要要求网络“畅通”。<br>
+当然，这个容器还是可以完成一些其他的需求，比如没有开通YouTube premium，想要后台播放功能，这个也算是一种曲线救国。</p>
+<h1 id="我自己的初衷">我自己的初衷</h1>
+<p>我自己最开始是为了解决因为Apple TV缺少国区app store，没有优爱腾，尤其是B站，想着是不是可以找到一个工具直接将B站关注的up主的更新的视频下载到群晖NAS上，然后使用PLEX等媒体库软件直接播放。在搜索工具下就找到了podsync这个镜像。虽然没有解决B站的问题，但是倒算是解决了Apple TV网络翻墙不便，不好使用YouTube看视频的问题。<br>
+还有一个，也算是可以做到了无感的收集以及批量下载YouTube的视频，省去了自己使用youtube-dl工具一个一个下载YouTube视频。</p>
+<h1 id="podsync-容器安装">podsync 容器安装</h1>
+<p>这个网上有个挺好的教程，可以参考知乎上这篇：<a href="https://zhuanlan.zhihu.com/p/302729516">利用EMBY，在NAS上打造个人Youtube流媒体中心</a> 。不过需要注意一点，Emby的podcast插件使用需要会员订阅，并不免费；而Emby的平替Jellyfin，插件库里没有podcast插件(目前2021/05/30 为止是这样)。而Plex，移除了插件功能，自身提供的podcast服务不支持泛播客url的订阅。<br>
+倒是苹果自家的Podcast app，非常好的支持泛播客，与podsync搭配完美，国内开发者的moonFM播客app，虽然同样支持泛播客订阅，但美中不足，目前为止还无法做到视频播放，只能“听个响”。</p>
+<h1 id="一些可能会踩到的坑">一些可能会踩到的坑</h1>
+<p>虽然上面提到的 <a href="https://zhuanlan.zhihu.com/p/302729516">利用EMBY，在NAS上打造个人Youtube流媒体中心</a> 已经挺完善了，但是还是留下了一个很严重的坑。<br>
+默认的配置，以及 <a href="https://zhuanlan.zhihu.com/p/302729516">利用EMBY，在NAS上打造个人Youtube流媒体中心</a> 里都没有设置 <code>bind_address</code> 的值，所以在后面由podsync生成的xml文件中，指向视频的链接都会是默认的 http://localhost:port/xx/xxxxx.mp4 ，在其他设备上基本是不可能播放的。还有默认的配置不会生成opml文件，如果在配置文件里关注了很多channel，想要在其他设备的app中导入这些订阅就太麻烦了。</p>
+<h2 id="视频链接-localhost-问题">视频链接 localhost 问题</h2>
+<p>解决 http://localhost:port/xx/xxxxx.mp4 问题时，试过修改 <code>bind_address = http://nasIP:port</code> ，遇到了podsync容器停止运行的问题，大概是我太菜了，去开发者的 GitHub issues 搜索了一下，解决方案也很简单，注释掉 <code>bind_address</code> 这一行，另外添加 <code>hostname = &quot;http://nasIP:port&quot;</code> 。如下图：<br>
+<img src="https://ishsiho.github.io/post-images/1622346694332.png" alt="" loading="lazy"></p>
+<h2 id="解决-podcast-封面模糊">解决 podcast 封面模糊</h2>
+<p>生成的xml 会有两处图片，一个是订阅封面，一个是每集视频的预览封面。每集的预览封面还好，如果是默认设置下，订阅封面还是很模糊的。podsync也给出了自定义设置，可以修改订阅封面图片为自定义图片，设置图片显示质量。例如：<br>
+<img src="https://ishsiho.github.io/post-images/1622347777960.png" alt="" loading="lazy"></p>
+<pre><code>[feeds.eSir]
+# eSir 为最终生成的RSS文件夹的名称，可以修改,不可为中文
+url = &quot;https://www.youtube.com/channel/UCOhkliOps3IS48ly-MgPC2A&quot; # 引号内填写Youtube频道/组织/用户/播放列表的链接，比如此处我填写的观视频地址
+page_size = 15 # 每次更新多少个视频 (请记住这可能会耗尽API令牌，好像是每天一万个)
+update_period = &quot;15m&quot; # 更新的频率，例如: &quot;60m&quot;, &quot;4h&quot;, &quot;2h45m&quot;，会按照频率定期更新新的视频
+quality = &quot;high&quot; # 或者 &quot;low&quot;，此处为清晰度选择
+format = &quot;video&quot; # 或者 &quot;audio&quot;，如果选择audio将只下载音频
+opml = true # 是否在生成的opml文件中包含该订阅，默认不设置时为false
+clean = { keep_last = 150 }  # 保留最近的多少个视频/音频文件
+custom = { cover_art = &quot;https://a.b.com/img/youtube/eSir.jpg&quot;, cover_art_quality = &quot;high&quot; }  # 自定义设置项，cover_art 为自定义订阅封面图片，cover_art_quality 为封面图片显示质量，值为 &quot;high&quot; 或 &quot;low&quot; 。
+</code></pre>
+<h2 id="没有生成opml订阅文件">没有生成opml订阅文件</h2>
+<p>默认的配置文件订阅设置并不会生成rss订阅的 opml 文件，想要把一堆订阅添加到 podcast app 异常麻烦，参考上面的代码，在订阅设置里添加 <code>opml = true</code> 即可在生成的 opml 文件里包含该feed订阅。<br>
+<img src="https://ishsiho.github.io/post-images/1622348546131.png" alt="" loading="lazy"></p>
+<h2 id="其他设置">其他设置</h2>
+<p>参考开发者 GitHub 的文档：</p>
+<pre><code>custom.cover_art_quality use &quot;high&quot; or &quot;low&quot; to special cover image quality from channel cover default is equal with &quot;quality&quot; and disable when custom.cover_art was set.
+custom = { title = &quot;Level1News&quot;, description = &quot;News sections of Level1Techs, in a podcast feed!&quot;, author = &quot;Level1Tech&quot;, cover_art = &quot;{IMAGE_URL}&quot;, cover_art_quality = &quot;high&quot;, category = &quot;TV&quot;, subcategories = [&quot;Documentary&quot;, &quot;Tech News&quot;], explicit = true, lang = &quot;en&quot; } # Optional feed customizations
+max_height = 720 # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
+cron_schedule = &quot;@every 12h&quot; # Optional cron expression format. If set then overwrite 'update_period'. See details below
+filters = { title = &quot;regex for title here&quot;, not_title = &quot;regex for negative title match&quot;, description = &quot;...&quot;, not_description = &quot;...&quot; } # Optional Golang regexp format. If set, then only download matching episodes.
+opml = true|false # Optional inclusion of the feed in the OPML file (default value: false)
+clean = { keep_last = 10 } # Keep last 10 episodes (order desc by PubDate)
+youtube_dl_args = [ &quot;--write-sub&quot;, &quot;--embed-subs&quot;, &quot;--sub-lang&quot;, &quot;en,en-US,en-GB&quot; ] # Optional extra arguments passed to youtube-dl when downloading videos from this feed. This example would embed available English closed captions in the videos. Note that setting '--audio-format' for audio format feeds, or '--format' or '--output' for any format may cause unexpected behaviour. You should only use this if you know what you are doing, and have read up on youtube-dl's options!
+</code></pre>
+<h1 id="还没有解决的一些问题">还没有解决的一些问题</h1>
+<ul>
+<li>在 NAS docker中安装这个容器，配置倒是蛮好设置的，但是网络就烦了些，需要让整个 NAS 科学上网。貌似podsync没法在配置文件里单独设置代理。</li>
+<li>其次，podsync容器里默认安装了youtube-dl，youtube-dl的下载参数配置不是该怎么去设置，可以使下载的文件名为YouTube的 视频标题-YouTuber-xxxxxxx.mp4 这种格式。并且生成的xml文件里的视频/音频链接也同样修改过来。</li>
+<li>不知道YouTube是否有random的视频list或者suggest的list。</li>
+<li>还是想要一个类似的工具可以下载国内视频平台的视频。</li>
+</ul>
+<hr>
+<p><img src="C:\Users\mu2er\OneDrive\图片\t_logo.svg" style="zoom:55%;" />You can touch me with  <a href="https://t.me/ishsiho" title="TG@ishsiho">Telegram:@Hsi Ho</a>.</p>
+<hr>
+
+                </div>
+            </article>
+        </div>
+
+        
+            <div class="next-post">
+                <div class="next gt-c-content-color-first">下一篇</div>
+                <a href="https://ishsiho.github.io/post/dockerruncouchdb/" class="post-title gt-a-link">
+                    docker 安装 CouchDB 用来同步 Moon FM
+                </a>
+            </div>
+        
+
+        
+            <span id="/post/YouTube-podsync/" class="leancloud_visitors" data-flag-title="记录docker搭建YouTube订阅同步podsync容器遇到的一些坑">
+                <em class="post-meta-item-text">阅读量 </em>
+                <i class="leancloud-visitors-count">0</i>
+            </span>
+        
+
+        
+
+        
+            <script src='https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js'></script>
+
+<style>
+	div#vcomments{
+		width:100%;
+		max-width: 1000px;
+		padding: 2.5%
+	}
+</style>
+
+
+	<div id="vcomments"></div>
+
+<script>
+	new Valine({
+		el: '#vcomments',
+		appId: 'YT7VTfGVbFHskGxV52JLFtw4-MdYXbMMI',
+		appKey: 'StfF0pQ0qfN6x1IXxyptPeBD',
+		avatar: 'monsterid',
+		pageSize: 5,
+		recordIp: false,
+		placeholder: '我有话讲，我要发言！',
+		visitor: true,
+	});
+</script>
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first">·  纯 文 字 社 · </div>
+    <div class="social-container">
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+    </div>
+    <div>
+        Theme by <a href="https://imhanjie.com/" target="_blank">imhanjie</a>, Powered by <a
+                href="https://github.com/getgridea/gridea" target="_blank">Gridea | <a href="https://ishsiho.github.io/atom.xml" target="_blank">RSS</a></a>
+    </div>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+</script>
+
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+<meta name="description" content=""/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<title>docker 安装 CouchDB 用来同步 Moon FM | PureText</title>
+
+<link rel="shortcut icon" href="https://ishsiho.github.io/favicon.ico?v=1698150415233">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://ishsiho.github.io/styles/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/languages/dart.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script>
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <div class="navbar-brand">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            PureText
+        </div>
+    </div>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+                <div class="nav-item">
+                    
+                        <a href="/" class="menu gt-a-link">
+                            首页
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/archives" class="menu gt-a-link">
+                            归档
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/tags" class="menu gt-a-link">
+                            标签
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/post/about" class="menu gt-a-link">
+                            关于
+                        </a>
+                    
+                </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1698150415233" action="/search/index.html">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    docker 安装 CouchDB 用来同步 Moon FM
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2021-05-11 ·
+                    </time>
+                    
+                        <a href="https://ishsiho.github.io/tag/d0TNyGm-T/" class="post-tags">
+                            # moonfm
+                        </a>
+                    
+                        <a href="https://ishsiho.github.io/tag/uXPlB5DfF/" class="post-tags">
+                            # docker
+                        </a>
+                    
+                        <a href="https://ishsiho.github.io/tag/mL7nUOjf8t/" class="post-tags">
+                            # couchdb
+                        </a>
+                    
+                        <a href="https://ishsiho.github.io/tag/64ycCnC0bK/" class="post-tags">
+                            # podcast
+                        </a>
+                    
+                        <a href="https://ishsiho.github.io/tag/9DVTgDHXgw/" class="post-tags">
+                            # 群晖
+                        </a>
+                    
+                </div>
+                <div class="post-content">
+                    <p>🪧🪧✉️✉️<img src="C:\Users\mu2er\OneDrive\图片\t_logo.svg" style="zoom:15%;" />You can touch me with  <a href="https://t.me/ishsiho" title="TG@ishsiho">Telegram:@Hsi Ho</a>.</p>
+<hr>
+<h2 id="缘起">缘起</h2>
+<p>说一下缘由，一直都特别喜欢听广播电台节目，觉得充满随机跟不确定性，而且更让人专注于主播的内容。很早前 podcast 就在国外蛮热火，但是在国内却“平平淡淡”，水土不服。第一个接触的 podcast 客户端应该是苹果的 iTunes ，那会 Windows 平台上，苹果还在支持 safari 浏览器。后来陆陆续续还用了微软家的 zune 软件。<br>
+<img src="https://ishsiho.github.io/post-images/1620671396757.png" alt="苹果Podcast" style="zoom:55%;" /><br>
+<img src="https://ishsiho.github.io/post-images/1620671491967.png" alt="微软ZUNE" style="zoom:70%;" /></p>
+<p>这两年，随着 vlog 的火热， 以声音为主的 podcast 也复兴了起来。这一两年里，随着 spotify 支持了 podcast ，国内的各种软件也雨后春笋一般冒起头，比如小宇宙。QQ音乐，网易云音乐的客户端也陆续都加入了播客的功能。不过记得微博上曾经有几个播客节目因为火了，很快被下架，传播只能通过别人的网盘。当时心里觉得，要在红红火火的 podcast 单词上加上一个 之狼里的&quot;危&quot;字。<br>
+<img src="https://ishsiho.github.io/post-images/1620671700978.png" alt="Spotify 添加了 Podcast 功能" style="zoom:60%;" /><br>
+spotify 添加了 podcast 功能<br>
+<img src="https://ishsiho.github.io/post-images/1620671575689.png" alt="国内的小宇宙app早期通过邀请码传播" style="zoom:93%;" /><br>
+国内的小宇宙最早靠邀请码传播</p>
+<p>最近几天用 docker 安装了 podsync ，可以将 YouTube 上的频道，列表里的视频下载自动下来，并且按频率定时刷新，然后生成 rss 订阅。rsshub 不能直接把 YouTube 视频变为 rss 订阅，这个工具曲线救国变相实现了。最初这个想法是为了在不太容易进行代理的 Apple TV 上看国内各网络平台视频的，<br>
+嗐，可惜还没有实现把 B站up主视频自动更新下载下来。<br>
+今年 Apple TV 推新的时候，各种传闻国行版已经在审核在路上，心里很激动，说不定，真的能直接在 Apple TV 上看各种国内视频平台了。<br>
+<img src="https://ishsiho.github.io/post-images/1620673010829.png" alt="Apple TV 主界面" style="zoom:45%;" /></p>
+<h2 id="正题">正题</h2>
+<p>扯这么多，下面是正题，前面的 podsync 很好，但就是可惜，生成的 rss 泛播客，大部分的app并不支持。国内开发者开发的这一款 要颜值有颜值，要功能也有功能，并且支持全平台的 moon FM ，真的很不错。遗憾的可能就是基于隐私，开发者并没有为这个app添加账号机制，自身也不支持同步设置，只能自己手动添加订阅，或者选择从 opml 文件导入。想要同步，也只能自己连接 couchdb 数据库。还有一点缺憾，这个app不支持视频播客的视频播放，只能播放音频。<br>
+<img src="https://ishsiho.github.io/post-images/1620673554537.png" alt="moon FM" style="zoom:50%;" /></p>
+<p>也是闲的才折腾，就记录一下自己在群晖上用 docker 部署安装 couchdb 的“简单过程”。大概是这个数据库还是“小众”了些，网上有关的教程挺少的。<br>
+下面是两种方法，终端命令行方式与DSM图形界面安装，喜欢哪种方式用哪一种，步骤里默认你已经开启了ssh端口，并知道怎样ssh连接到群晖。</p>
+<h3 id="1-最简单的部署安装大概一行命令就好了">1、 最简单的部署安装，大概一行命令就好了</h3>
+<p><code>docker run -d --name couchdb -p 5984:5984 -v &lt;your path&gt;:/opt/couchdb/data -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=password couchdb</code><br>
+如果要建一个用来同步 moon FM 的数据表，还需要用下面这两行命令：</p>
+<pre><code>docker exec -it couchdb bash
+curl -u admin:password -X PUT &lt;群晖IP&gt;:5984/moonfm
+</code></pre>
+<p>最后只要在 moon FM 软件的同步设置里 输入：<code>http://admin:password@群晖IP:5984/moonfm</code> 就可以同步了，这里的“/moonfm”就是上面在couchdb数据库中创建的表。</p>
+<h3 id="2-群晖通过图形界面部署安装">2、群晖通过图形界面部署安装</h3>
+<h4 id="21-下载镜像">2.1 下载镜像</h4>
+<p>打开群晖的docker套件，点左侧的“注册表”，搜索关键词“couchdb”。<br>
+<img src="https://ishsiho.github.io/post-images/1620674413883.png" alt="群晖docker" style="zoom:40%;" /><br>
+选择第一个镜像双击下载，等待下载完成。</p>
+<h4 id="22-部署安装-couchdb">2.2 部署安装 couchdb</h4>
+<p>选择“映像”，双击刚下载完成的 couchdb 注册表创建容器。<br>
+<img src="https://ishsiho.github.io/post-images/1620674643632.png" alt="部署安装" style="zoom:40%;" /><br>
+<img src="https://ishsiho.github.io/post-images/1620674761951.png" alt="映射文件目录" style="zoom:73%;" /><br>
+<img src="https://ishsiho.github.io/post-images/1620674903759.png" alt="映射端口" style="zoom:73%;" /><br>
+端口映射这里，可以只固定容器内部&quot;5894&quot;这个端口，只修改<strong>左侧</strong>端口号！<br>
+<img src="https://ishsiho.github.io/post-images/1620675100545.png" alt="设置账户" style="zoom:75%;" /><br>
+最后在环境里添加两项，分别是数据库的用户名跟密码：COUCHDB_USER=admin COUCHDB_PASSWORD=password<br>
+最后确定，然后运行容器。</p>
+<h4 id="23-创建一个名为moonfm的database用来做moon-fm同步">2.3 创建一个名为“moonfm”的database用来做moon FM同步</h4>
+<p>打开容器couchdb的详情，然后选择终端机，新增通过命令启动，输入 bash ，确定。<br>
+接着在新打开的bash里输入：<code>curl -u admin:password -X PUT localhost:5984/moonfm</code> 回车<br>
+<img src="https://ishsiho.github.io/post-images/1620675647129.png" alt="创建database" style="zoom:55%;" /></p>
+<p>最后同样只要在 moon FM 软件的同步设置里 输入：<code>http://admin:password@群晖IP:5984/moonfm</code> 就可以在多个设备上同步所有订阅了。</p>
+<p>是不是还挺简单的，也没有什么坑，但是网上相关教程太少了，只有外网零星才有一些相关结果，怎么去创建database。</p>
+<p>最后还是希望 moon FM 的开发者可以增加一些其他的，例如网盘，webDAV等方式来同步不同设备间的订阅；其次，能够像苹果的 podcast 一样，不光支持泛播客订阅，还可以播放视频。</p>
+<hr>
+<p><img src="C:\Users\mu2er\OneDrive\图片\t_logo.svg" style="zoom:15%;" />You can touch me with  <a href="https://t.me/mu2er" title="TG@mu2er">Telegram:@mu2er</a>.</p>
+<hr>
+
+                </div>
+            </article>
+        </div>
+
+        
+            <div class="next-post">
+                <div class="next gt-c-content-color-first">下一篇</div>
+                <a href="https://ishsiho.github.io/post/first/" class="post-title gt-a-link">
+                    这是第一篇文章
+                </a>
+            </div>
+        
+
+        
+            <span id="/post/dockerruncouchdb/" class="leancloud_visitors" data-flag-title="docker 安装 CouchDB 用来同步 Moon FM">
+                <em class="post-meta-item-text">阅读量 </em>
+                <i class="leancloud-visitors-count">0</i>
+            </span>
+        
+
+        
+
+        
+            <script src='https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js'></script>
+
+<style>
+	div#vcomments{
+		width:100%;
+		max-width: 1000px;
+		padding: 2.5%
+	}
+</style>
+
+
+	<div id="vcomments"></div>
+
+<script>
+	new Valine({
+		el: '#vcomments',
+		appId: 'YT7VTfGVbFHskGxV52JLFtw4-MdYXbMMI',
+		appKey: 'StfF0pQ0qfN6x1IXxyptPeBD',
+		avatar: 'monsterid',
+		pageSize: 5,
+		recordIp: false,
+		placeholder: '我有话讲，我要发言！',
+		visitor: true,
+	});
+</script>
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first">·  纯 文 字 社 · </div>
+    <div class="social-container">
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+    </div>
+    <div>
+        Theme by <a href="https://imhanjie.com/" target="_blank">imhanjie</a>, Powered by <a
+                href="https://github.com/getgridea/gridea" target="_blank">Gridea | <a href="https://ishsiho.github.io/atom.xml" target="_blank">RSS</a></a>
+    </div>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+</script>
+
+    </div>
+</div>
+</body>
+</html>

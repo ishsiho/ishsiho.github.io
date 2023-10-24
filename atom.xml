@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://ishsiho.github.io</id>
+    <title>PureText</title>
+    <updated>2023-10-24T12:27:43.072Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://ishsiho.github.io"/>
+    <link rel="self" href="https://ishsiho.github.io/atom.xml"/>
+    <subtitle>·  纯 文 字 社 · </subtitle>
+    <logo>https://ishsiho.github.io/images/avatar.png</logo>
+    <icon>https://ishsiho.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2023, PureText</rights>
+    <entry>
+        <title type="html"><![CDATA[记录docker搭建YouTube订阅同步podsync容器遇到的一些坑]]></title>
+        <id>https://ishsiho.github.io/post/YouTube-podsync/</id>
+        <link href="https://ishsiho.github.io/post/YouTube-podsync/">
+        </link>
+        <updated>2021-05-30T02:53:08.000Z</updated>
+        <content type="html"><![CDATA[<p>🪧🪧✉️✉️You can touch me with  <a href="https://t.me/ishsiho" title="TG@ishsiho">Telegram:@Hsi Ho</a>.</p>
+<hr>
+<h1 id="podsync容器">podsync容器</h1>
+<p>GitHub项目地址：<a href="https://github.com/mxpv/podsync" title="mxpv/podsync">https://github.com/mxpv/podsync</a><br>
+podsync 容器，简单来说就是一个集成了youtube-dl的podcast服务容器，可以把YouTube的频道或者列表视频，按照预定好的时间频率不断刷新然后下载下来，然后生成<strong>泛播客</strong>订阅。<br>
+<img src="https://ishsiho.github.io/post-images/1622344133426.png" alt="" loading="lazy"><br>
+如上图，即是podsync生成的苏通河牛通YouTube channel的rss订阅文件，其中红框框起来的item，就是一期视频。整个rss文件包括了频道信息，youtuber的简介信息，每一期视频标题跟简介。而且已经将每一期的视频下载到了服务器的本地上，因此只需要服务器可以连接到YouTube网站，其他设备连接到这台服务器则不需要要求网络“畅通”。<br>
+当然，这个容器还是可以完成一些其他的需求，比如没有开通YouTube premium，想要后台播放功能，这个也算是一种曲线救国。</p>
+<h1 id="我自己的初衷">我自己的初衷</h1>
+<p>我自己最开始是为了解决因为Apple TV缺少国区app store，没有优爱腾，尤其是B站，想着是不是可以找到一个工具直接将B站关注的up主的更新的视频下载到群晖NAS上，然后使用PLEX等媒体库软件直接播放。在搜索工具下就找到了podsync这个镜像。虽然没有解决B站的问题，但是倒算是解决了Apple TV网络翻墙不便，不好使用YouTube看视频的问题。<br>
+还有一个，也算是可以做到了无感的收集以及批量下载YouTube的视频，省去了自己使用youtube-dl工具一个一个下载YouTube视频。</p>
+<h1 id="podsync-容器安装">podsync 容器安装</h1>
+<p>这个网上有个挺好的教程，可以参考知乎上这篇：<a href="https://zhuanlan.zhihu.com/p/302729516">利用EMBY，在NAS上打造个人Youtube流媒体中心</a> 。不过需要注意一点，Emby的podcast插件使用需要会员订阅，并不免费；而Emby的平替Jellyfin，插件库里没有podcast插件(目前2021/05/30 为止是这样)。而Plex，移除了插件功能，自身提供的podcast服务不支持泛播客url的订阅。<br>
+倒是苹果自家的Podcast app，非常好的支持泛播客，与podsync搭配完美，国内开发者的moonFM播客app，虽然同样支持泛播客订阅，但美中不足，目前为止还无法做到视频播放，只能“听个响”。</p>
+<h1 id="一些可能会踩到的坑">一些可能会踩到的坑</h1>
+<p>虽然上面提到的 <a href="https://zhuanlan.zhihu.com/p/302729516">利用EMBY，在NAS上打造个人Youtube流媒体中心</a> 已经挺完善了，但是还是留下了一个很严重的坑。<br>
+默认的配置，以及 <a href="https://zhuanlan.zhihu.com/p/302729516">利用EMBY，在NAS上打造个人Youtube流媒体中心</a> 里都没有设置 <code>bind_address</code> 的值，所以在后面由podsync生成的xml文件中，指向视频的链接都会是默认的 http://localhost:port/xx/xxxxx.mp4 ，在其他设备上基本是不可能播放的。还有默认的配置不会生成opml文件，如果在配置文件里关注了很多channel，想要在其他设备的app中导入这些订阅就太麻烦了。</p>
+<h2 id="视频链接-localhost-问题">视频链接 localhost 问题</h2>
+<p>解决 http://localhost:port/xx/xxxxx.mp4 问题时，试过修改 <code>bind_address = http://nasIP:port</code> ，遇到了podsync容器停止运行的问题，大概是我太菜了，去开发者的 GitHub issues 搜索了一下，解决方案也很简单，注释掉 <code>bind_address</code> 这一行，另外添加 <code>hostname = &quot;http://nasIP:port&quot;</code> 。如下图：<br>
+<img src="https://ishsiho.github.io/post-images/1622346694332.png" alt="" loading="lazy"></p>
+<h2 id="解决-podcast-封面模糊">解决 podcast 封面模糊</h2>
+<p>生成的xml 会有两处图片，一个是订阅封面，一个是每集视频的预览封面。每集的预览封面还好，如果是默认设置下，订阅封面还是很模糊的。podsync也给出了自定义设置，可以修改订阅封面图片为自定义图片，设置图片显示质量。例如：<br>
+<img src="https://ishsiho.github.io/post-images/1622347777960.png" alt="" loading="lazy"></p>
+<pre><code>[feeds.eSir]
+# eSir 为最终生成的RSS文件夹的名称，可以修改,不可为中文
+url = &quot;https://www.youtube.com/channel/UCOhkliOps3IS48ly-MgPC2A&quot; # 引号内填写Youtube频道/组织/用户/播放列表的链接，比如此处我填写的观视频地址
+page_size = 15 # 每次更新多少个视频 (请记住这可能会耗尽API令牌，好像是每天一万个)
+update_period = &quot;15m&quot; # 更新的频率，例如: &quot;60m&quot;, &quot;4h&quot;, &quot;2h45m&quot;，会按照频率定期更新新的视频
+quality = &quot;high&quot; # 或者 &quot;low&quot;，此处为清晰度选择
+format = &quot;video&quot; # 或者 &quot;audio&quot;，如果选择audio将只下载音频
+opml = true # 是否在生成的opml文件中包含该订阅，默认不设置时为false
+clean = { keep_last = 150 }  # 保留最近的多少个视频/音频文件
+custom = { cover_art = &quot;https://a.b.com/img/youtube/eSir.jpg&quot;, cover_art_quality = &quot;high&quot; }  # 自定义设置项，cover_art 为自定义订阅封面图片，cover_art_quality 为封面图片显示质量，值为 &quot;high&quot; 或 &quot;low&quot; 。
+</code></pre>
+<h2 id="没有生成opml订阅文件">没有生成opml订阅文件</h2>
+<p>默认的配置文件订阅设置并不会生成rss订阅的 opml 文件，想要把一堆订阅添加到 podcast app 异常麻烦，参考上面的代码，在订阅设置里添加 <code>opml = true</code> 即可在生成的 opml 文件里包含该feed订阅。<br>
+<img src="https://ishsiho.github.io/post-images/1622348546131.png" alt="" loading="lazy"></p>
+<h2 id="其他设置">其他设置</h2>
+<p>参考开发者 GitHub 的文档：</p>
+<pre><code>custom.cover_art_quality use &quot;high&quot; or &quot;low&quot; to special cover image quality from channel cover default is equal with &quot;quality&quot; and disable when custom.cover_art was set.
+custom = { title = &quot;Level1News&quot;, description = &quot;News sections of Level1Techs, in a podcast feed!&quot;, author = &quot;Level1Tech&quot;, cover_art = &quot;{IMAGE_URL}&quot;, cover_art_quality = &quot;high&quot;, category = &quot;TV&quot;, subcategories = [&quot;Documentary&quot;, &quot;Tech News&quot;], explicit = true, lang = &quot;en&quot; } # Optional feed customizations
+max_height = 720 # Optional maximal height of video, example: 720, 1080, 1440, 2160, ...
+cron_schedule = &quot;@every 12h&quot; # Optional cron expression format. If set then overwrite 'update_period'. See details below
+filters = { title = &quot;regex for title here&quot;, not_title = &quot;regex for negative title match&quot;, description = &quot;...&quot;, not_description = &quot;...&quot; } # Optional Golang regexp format. If set, then only download matching episodes.
+opml = true|false # Optional inclusion of the feed in the OPML file (default value: false)
+clean = { keep_last = 10 } # Keep last 10 episodes (order desc by PubDate)
+youtube_dl_args = [ &quot;--write-sub&quot;, &quot;--embed-subs&quot;, &quot;--sub-lang&quot;, &quot;en,en-US,en-GB&quot; ] # Optional extra arguments passed to youtube-dl when downloading videos from this feed. This example would embed available English closed captions in the videos. Note that setting '--audio-format' for audio format feeds, or '--format' or '--output' for any format may cause unexpected behaviour. You should only use this if you know what you are doing, and have read up on youtube-dl's options!
+</code></pre>
+<h1 id="还没有解决的一些问题">还没有解决的一些问题</h1>
+<ul>
+<li>在 NAS docker中安装这个容器，配置倒是蛮好设置的，但是网络就烦了些，需要让整个 NAS 科学上网。貌似podsync没法在配置文件里单独设置代理。</li>
+<li>其次，podsync容器里默认安装了youtube-dl，youtube-dl的下载参数配置不是该怎么去设置，可以使下载的文件名为YouTube的 视频标题-YouTuber-xxxxxxx.mp4 这种格式。并且生成的xml文件里的视频/音频链接也同样修改过来。</li>
+<li>不知道YouTube是否有random的视频list或者suggest的list。</li>
+<li>还是想要一个类似的工具可以下载国内视频平台的视频。</li>
+</ul>
+<hr>
+<p><img src="C:\Users\mu2er\OneDrive\图片\t_logo.svg" style="zoom:55%;" />You can touch me with  <a href="https://t.me/ishsiho" title="TG@ishsiho">Telegram:@Hsi Ho</a>.</p>
+<hr>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[docker 安装 CouchDB 用来同步 Moon FM]]></title>
+        <id>https://ishsiho.github.io/post/dockerruncouchdb/</id>
+        <link href="https://ishsiho.github.io/post/dockerruncouchdb/">
+        </link>
+        <updated>2021-05-10T18:11:04.000Z</updated>
+        <content type="html"><![CDATA[<p>🪧🪧✉️✉️<img src="C:\Users\mu2er\OneDrive\图片\t_logo.svg" style="zoom:15%;" />You can touch me with  <a href="https://t.me/ishsiho" title="TG@ishsiho">Telegram:@Hsi Ho</a>.</p>
+<hr>
+<h2 id="缘起">缘起</h2>
+<p>说一下缘由，一直都特别喜欢听广播电台节目，觉得充满随机跟不确定性，而且更让人专注于主播的内容。很早前 podcast 就在国外蛮热火，但是在国内却“平平淡淡”，水土不服。第一个接触的 podcast 客户端应该是苹果的 iTunes ，那会 Windows 平台上，苹果还在支持 safari 浏览器。后来陆陆续续还用了微软家的 zune 软件。<br>
+<img src="https://ishsiho.github.io/post-images/1620671396757.png" alt="苹果Podcast" style="zoom:55%;" /><br>
+<img src="https://ishsiho.github.io/post-images/1620671491967.png" alt="微软ZUNE" style="zoom:70%;" /></p>
+<p>这两年，随着 vlog 的火热， 以声音为主的 podcast 也复兴了起来。这一两年里，随着 spotify 支持了 podcast ，国内的各种软件也雨后春笋一般冒起头，比如小宇宙。QQ音乐，网易云音乐的客户端也陆续都加入了播客的功能。不过记得微博上曾经有几个播客节目因为火了，很快被下架，传播只能通过别人的网盘。当时心里觉得，要在红红火火的 podcast 单词上加上一个 之狼里的&quot;危&quot;字。<br>
+<img src="https://ishsiho.github.io/post-images/1620671700978.png" alt="Spotify 添加了 Podcast 功能" style="zoom:60%;" /><br>
+spotify 添加了 podcast 功能<br>
+<img src="https://ishsiho.github.io/post-images/1620671575689.png" alt="国内的小宇宙app早期通过邀请码传播" style="zoom:93%;" /><br>
+国内的小宇宙最早靠邀请码传播</p>
+<p>最近几天用 docker 安装了 podsync ，可以将 YouTube 上的频道，列表里的视频下载自动下来，并且按频率定时刷新，然后生成 rss 订阅。rsshub 不能直接把 YouTube 视频变为 rss 订阅，这个工具曲线救国变相实现了。最初这个想法是为了在不太容易进行代理的 Apple TV 上看国内各网络平台视频的，<br>
+嗐，可惜还没有实现把 B站up主视频自动更新下载下来。<br>
+今年 Apple TV 推新的时候，各种传闻国行版已经在审核在路上，心里很激动，说不定，真的能直接在 Apple TV 上看各种国内视频平台了。<br>
+<img src="https://ishsiho.github.io/post-images/1620673010829.png" alt="Apple TV 主界面" style="zoom:45%;" /></p>
+<h2 id="正题">正题</h2>
+<p>扯这么多，下面是正题，前面的 podsync 很好，但就是可惜，生成的 rss 泛播客，大部分的app并不支持。国内开发者开发的这一款 要颜值有颜值，要功能也有功能，并且支持全平台的 moon FM ，真的很不错。遗憾的可能就是基于隐私，开发者并没有为这个app添加账号机制，自身也不支持同步设置，只能自己手动添加订阅，或者选择从 opml 文件导入。想要同步，也只能自己连接 couchdb 数据库。还有一点缺憾，这个app不支持视频播客的视频播放，只能播放音频。<br>
+<img src="https://ishsiho.github.io/post-images/1620673554537.png" alt="moon FM" style="zoom:50%;" /></p>
+<p>也是闲的才折腾，就记录一下自己在群晖上用 docker 部署安装 couchdb 的“简单过程”。大概是这个数据库还是“小众”了些，网上有关的教程挺少的。<br>
+下面是两种方法，终端命令行方式与DSM图形界面安装，喜欢哪种方式用哪一种，步骤里默认你已经开启了ssh端口，并知道怎样ssh连接到群晖。</p>
+<h3 id="1-最简单的部署安装大概一行命令就好了">1、 最简单的部署安装，大概一行命令就好了</h3>
+<p><code>docker run -d --name couchdb -p 5984:5984 -v &lt;your path&gt;:/opt/couchdb/data -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=password couchdb</code><br>
+如果要建一个用来同步 moon FM 的数据表，还需要用下面这两行命令：</p>
+<pre><code>docker exec -it couchdb bash
+curl -u admin:password -X PUT &lt;群晖IP&gt;:5984/moonfm
+</code></pre>
+<p>最后只要在 moon FM 软件的同步设置里 输入：<code>http://admin:password@群晖IP:5984/moonfm</code> 就可以同步了，这里的“/moonfm”就是上面在couchdb数据库中创建的表。</p>
+<h3 id="2-群晖通过图形界面部署安装">2、群晖通过图形界面部署安装</h3>
+<h4 id="21-下载镜像">2.1 下载镜像</h4>
+<p>打开群晖的docker套件，点左侧的“注册表”，搜索关键词“couchdb”。<br>
+<img src="https://ishsiho.github.io/post-images/1620674413883.png" alt="群晖docker" style="zoom:40%;" /><br>
+选择第一个镜像双击下载，等待下载完成。</p>
+<h4 id="22-部署安装-couchdb">2.2 部署安装 couchdb</h4>
+<p>选择“映像”，双击刚下载完成的 couchdb 注册表创建容器。<br>
+<img src="https://ishsiho.github.io/post-images/1620674643632.png" alt="部署安装" style="zoom:40%;" /><br>
+<img src="https://ishsiho.github.io/post-images/1620674761951.png" alt="映射文件目录" style="zoom:73%;" /><br>
+<img src="https://ishsiho.github.io/post-images/1620674903759.png" alt="映射端口" style="zoom:73%;" /><br>
+端口映射这里，可以只固定容器内部&quot;5894&quot;这个端口，只修改<strong>左侧</strong>端口号！<br>
+<img src="https://ishsiho.github.io/post-images/1620675100545.png" alt="设置账户" style="zoom:75%;" /><br>
+最后在环境里添加两项，分别是数据库的用户名跟密码：COUCHDB_USER=admin COUCHDB_PASSWORD=password<br>
+最后确定，然后运行容器。</p>
+<h4 id="23-创建一个名为moonfm的database用来做moon-fm同步">2.3 创建一个名为“moonfm”的database用来做moon FM同步</h4>
+<p>打开容器couchdb的详情，然后选择终端机，新增通过命令启动，输入 bash ，确定。<br>
+接着在新打开的bash里输入：<code>curl -u admin:password -X PUT localhost:5984/moonfm</code> 回车<br>
+<img src="https://ishsiho.github.io/post-images/1620675647129.png" alt="创建database" style="zoom:55%;" /></p>
+<p>最后同样只要在 moon FM 软件的同步设置里 输入：<code>http://admin:password@群晖IP:5984/moonfm</code> 就可以在多个设备上同步所有订阅了。</p>
+<p>是不是还挺简单的，也没有什么坑，但是网上相关教程太少了，只有外网零星才有一些相关结果，怎么去创建database。</p>
+<p>最后还是希望 moon FM 的开发者可以增加一些其他的，例如网盘，webDAV等方式来同步不同设备间的订阅；其次，能够像苹果的 podcast 一样，不光支持泛播客订阅，还可以播放视频。</p>
+<hr>
+<p><img src="C:\Users\mu2er\OneDrive\图片\t_logo.svg" style="zoom:15%;" />You can touch me with  <a href="https://t.me/mu2er" title="TG@mu2er">Telegram:@mu2er</a>.</p>
+<hr>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[这是第一篇文章]]></title>
+        <id>https://ishsiho.github.io/post/first/</id>
+        <link href="https://ishsiho.github.io/post/first/">
+        </link>
+        <updated>2021-05-04T11:35:00.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="主要内容">主要内容</h2>
+<blockquote>
+<h4 id="markdown是什么">Markdown<em>是什么</em>？</h4>
+<h4 id="谁创造了它"><em>谁</em>创造了它？</h4>
+<h4 id="为什么要使用它"><em>为什么</em>要使用它？</h4>
+<h4 id="怎么使用"><em>怎么</em>使用？</h4>
+<h4 id="谁在用"><em>谁</em>在用？</h4>
+<h4 id="尝试一下">尝试一下</h4>
+</blockquote>
+<h2 id="正文">正文</h2>
+<h3 id="1-markdown是什么">1. Markdown<em>是什么</em>？</h3>
+<p><strong>Markdown</strong>是一种轻量级<strong>标记语言</strong>，它以纯文本形式(<em>易读、易写、易更改</em>)编写文档，并最终以HTML格式发布。<br>
+<strong>Markdown</strong>也可以理解为将以MARKDOWN语法编写的语言转换成HTML内容的工具。</p>
+<h3 id="2-谁创造了它">2. <em>谁</em>创造了它？</h3>
+<p>它由<a href="http://www.aaronsw.com/"><strong>Aaron Swartz</strong></a>和<strong>John Gruber</strong>共同设计，<strong>Aaron Swartz</strong>就是那位于去年（<em>2013年1月11日</em>）自杀,有着<strong>开挂</strong>一般人生经历的程序员。维基百科对他的<a href="http://zh.wikipedia.org/wiki/%E4%BA%9A%E4%BC%A6%C2%B7%E6%96%AF%E6%B2%83%E8%8C%A8">介绍</a>是：<strong>软件工程师、作家、政治组织者、互联网活动家、维基百科人</strong>。</p>
+<p>他有着足以让你跪拜的人生经历：</p>
+<ul>
+<li><strong>14岁</strong>参与RSS 1.0规格标准的制订。</li>
+<li><strong>2004</strong>年入读<strong>斯坦福</strong>，之后退学。</li>
+<li><strong>2005</strong>年创建<a href="http://infogami.org/">Infogami</a>，之后与<a href="http://www.reddit.com/">Reddit</a>合并成为其合伙人。</li>
+<li><strong>2010</strong>年创立求进会（Demand Progress），积极参与禁止网络盗版法案（SOPA）活动，最终该提案被撤回。</li>
+<li><strong>2011</strong>年7月19日，因被控从MIT和JSTOR下载480万篇学术论文并以免费形式上传于网络被捕。</li>
+<li><strong>2013</strong>年1月自杀身亡。</li>
+</ul>
+<figure data-type="image" tabindex="1"><img src="https://github.com/younghz/Markdown/raw/master/resource/Aaron_Swartz.jpg" alt="Aaron Swartz" loading="lazy"></figure>
+<p>天才都有早逝的归途。</p>
+<h3 id="3-为什么要使用它">3. <em>为什么</em>要使用它？</h3>
+<ul>
+<li>它是易读（看起来舒服）、易写（语法简单）、易更改<strong>纯文本</strong>。处处体现着<strong>极简主义</strong>的影子。</li>
+<li>兼容HTML，可以转换为HTML格式发布。</li>
+<li>跨平台使用。</li>
+<li>越来越多的网站支持Markdown。</li>
+<li>更方便清晰地组织你的电子邮件。（Markdown-here, Airmail）</li>
+<li>摆脱Word（我不是认真的）。</li>
+</ul>
+<h3 id="4-怎么使用">4. <em>怎么</em>使用？</h3>
+<p>如果不算<strong>扩展</strong>，Markdown的语法绝对<strong>简单</strong>到让你爱不释手。</p>
+<p>Markdown语法主要分为如下几大部分：<br>
+<strong>标题</strong>，<strong>段落</strong>，<strong>区块引用</strong>，<strong>代码区块</strong>，<strong>强调</strong>，<strong>列表</strong>，<strong>分割线</strong>，<strong>链接</strong>，<strong>图片</strong>，<strong>反斜杠 <code>\</code></strong>，<strong>符号'`'</strong>。</p>
+<h4 id="41-标题">4.1 标题</h4>
+<p>两种形式：<br>
+1）使用<code>=</code>和<code>-</code>标记一级和二级标题。</p>
+<blockquote>
+<p>一级标题<br>
+<code>=========</code><br>
+二级标题<br>
+<code>---------</code></p>
+</blockquote>
+<p>效果：</p>
+<blockquote>
+<h1 id="一级标题">一级标题</h1>
+<h2 id="二级标题">二级标题</h2>
+</blockquote>
+<p>2）使用<code>#</code>，可表示1-6级标题。</p>
+<blockquote>
+<p># 一级标题<br>
+## 二级标题<br>
+### 三级标题<br>
+#### 四级标题<br>
+##### 五级标题<br>
+###### 六级标题</p>
+</blockquote>
+<p>效果：</p>
+<blockquote>
+<h1 id="一级标题-2">一级标题</h1>
+<h2 id="二级标题-2">二级标题</h2>
+<h3 id="三级标题">三级标题</h3>
+<h4 id="四级标题">四级标题</h4>
+<h5 id="五级标题">五级标题</h5>
+<h6 id="六级标题">六级标题</h6>
+</blockquote>
+<h4 id="42-段落">4.2 段落</h4>
+<p>段落的前后要有空行，所谓的空行是指没有文字内容。若想在段内强制换行的方式是使用<strong>两个以上</strong>空格加上回车（引用中换行省略回车）。</p>
+<h4 id="43-区块引用">4.3 区块引用</h4>
+<p>在段落的每行或者只在第一行使用符号<code>&gt;</code>,还可使用多个嵌套引用，如：</p>
+<blockquote>
+<p>&gt; 区块引用<br>
+&gt;&gt; 嵌套引用</p>
+</blockquote>
+<p>效果：</p>
+<blockquote>
+<p>区块引用</p>
+<blockquote>
+<p>嵌套引用</p>
+</blockquote>
+</blockquote>
+<h4 id="44-代码区块">4.4 代码区块</h4>
+<p>代码区块的建立是在每行加上4个空格或者一个制表符（如同写代码一样）。如<br>
+普通段落：</p>
+<p>void main()<br>
+{<br>
+printf(&quot;Hello, Markdown.&quot;);<br>
+}</p>
+<p>代码区块：</p>
+<pre><code>void main()
+{
+    printf(&quot;Hello, Markdown.&quot;);
+}
+</code></pre>
+<p><strong>注意</strong>:需要和普通段落之间存在空行。</p>
+<h4 id="45-强调">4.5 强调</h4>
+<p>在强调内容两侧分别加上<code>*</code>或者<code>_</code>，如：</p>
+<blockquote>
+<p>*斜体*，_斜体_<br>
+**粗体**，__粗体__</p>
+</blockquote>
+<p>效果：</p>
+<blockquote>
+<p><em>斜体</em>，<em>斜体</em><br>
+<strong>粗体</strong>，<strong>粗体</strong></p>
+</blockquote>
+<h4 id="46-列表">4.6 列表</h4>
+<p>使用<code>·</code>、<code>+</code>、或<code>-</code>标记无序列表，如：</p>
+<blockquote>
+<p>-（+*） 第一项<br>
+-（+*） 第二项<br>
+- （+*）第三项</p>
+</blockquote>
+<p><strong>注意</strong>：标记后面最少有一个_空格_或_制表符_。若不在引用区块中，必须和前方段落之间存在空行。</p>
+<p>效果：</p>
+<blockquote>
+<ul>
+<li>第一项</li>
+<li>第二项</li>
+<li>第三项</li>
+</ul>
+</blockquote>
+<p>有序列表的标记方式是将上述的符号换成数字,并辅以<code>.</code>，如：</p>
+<blockquote>
+<p>1 . 第一项<br>
+2 . 第二项<br>
+3 . 第三项</p>
+</blockquote>
+<p>效果：</p>
+<blockquote>
+<ol>
+<li>第一项</li>
+<li>第二项</li>
+<li>第三项</li>
+</ol>
+</blockquote>
+<h4 id="47-分割线">4.7 分割线</h4>
+<p>分割线最常使用就是三个或以上<code>*</code>，还可以使用<code>-</code>和<code>_</code>。</p>
+<h4 id="48-链接">4.8 链接</h4>
+<p>链接可以由两种形式生成：<strong>行内式</strong>和<strong>参考式</strong>。<br>
+<strong>行内式</strong>：</p>
+<blockquote>
+<p>[younghz的Markdown库](https:😕/github.com/younghz/Markdown &quot;Markdown&quot;)。</p>
+</blockquote>
+<p>效果：</p>
+<blockquote>
+<p><a href="https:://github.com/younghz/Markdown" title="Markdown">younghz的Markdown库</a>。</p>
+</blockquote>
+<p><strong>参考式</strong>：</p>
+<blockquote>
+<p>[younghz的Markdown库1][1]<br>
+[younghz的Markdown库2][2]<br>
+[1]:https:😕/github.com/younghz/Markdown &quot;Markdown&quot;<br>
+[2]:https:😕/github.com/younghz/Markdown &quot;Markdown&quot;</p>
+</blockquote>
+<p>效果：</p>
+<blockquote>
+<p><a href="https:://github.com/younghz/Markdown" title="Markdown">younghz的Markdown库1</a><br>
+<a href="https:://github.com/younghz/Markdown" title="Markdown">younghz的Markdown库2</a></p>
+</blockquote>
+<p><strong>注意</strong>：上述的<code>[1]:https:://github.com/younghz/Markdown &quot;Markdown&quot;</code>不出现在区块中。</p>
+<h4 id="49-图片">4.9 图片</h4>
+<p>添加图片的形式和链接相似，只需在链接的基础上前方加一个<code>！</code>。</p>
+<h4 id="410-反斜杠">4.10 反斜杠<code>\</code></h4>
+<p>相当于<strong>反转义</strong>作用。使符号成为普通符号。</p>
+<h4 id="411-符号">4.11 符号'`'</h4>
+<p>起到标记作用。如：</p>
+<blockquote>
+<p>`ctrl+a`</p>
+</blockquote>
+<p>效果：</p>
+<blockquote>
+<p><code>ctrl+a</code></p>
+</blockquote>
+<h4 id="5-谁在用">5. <em>谁</em>在用？</h4>
+<p>Markdown的使用者：</p>
+<ul>
+<li>GitHub</li>
+<li>简书</li>
+<li>Stack Overflow</li>
+<li>Apollo</li>
+<li>Moodle</li>
+<li>Reddit</li>
+<li>等等</li>
+</ul>
+<h4 id="6-尝试一下">6. 尝试一下</h4>
+<ul>
+<li><strong>Chrome</strong>下的插件诸如<code>stackedit</code>与<code>markdown-here</code>等非常方便，也不用担心平台受限。</li>
+<li><strong>在线</strong>的dillinger.io评价也不错</li>
+<li><strong>Windowns</strong>下的MarkdownPad也用过，不过免费版的体验不是很好。</li>
+<li><strong>Mac</strong>下的Mou是国人贡献的，口碑很好。</li>
+<li><strong>Linux</strong>下的ReText不错。</li>
+</ul>
+<p><strong>当然，最终境界永远都是笔下是语法，心中格式化 😃。</strong></p>
+<hr>
+<p><strong>注意</strong>：不同的Markdown解释器或工具对相应语法（扩展语法）的解释效果不尽相同，具体可参见工具的使用说明。<br>
+虽然有人想出面搞一个所谓的标准化的Markdown，[没想到还惹怒了健在的创始人John Gruber]<br>
+(http://blog.codinghorror.com/standard-markdown-is-now-common-markdown/ )。</p>
+<hr>
+<p>以上基本是所有traditonal markdown的语法。</p>
+<h3 id="其它">其它：</h3>
+<p>列表的使用(非traditonal markdown)：</p>
+<p>用<code>|</code>表示表格纵向边界，表头和表内容用<code>-</code>隔开，并可用<code>:</code>进行对齐设置，两边都有<code>:</code>则表示居中，若不加<code>:</code>则默认左对齐。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">代码库</th>
+<th>链接</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">MarkDown</td>
+<td><a href="https://github.com/younghz/Markdown" title="Markdown">https://github.com/younghz/Markdown</a></td>
+</tr>
+<tr>
+<td style="text-align:center">MarkDownCopy</td>
+<td><a href="https://github.com/younghz/Markdown" title="Markdown">https://github.com/younghz/Markdown</a></td>
+</tr>
+</tbody>
+</table>
+<p>关于其它扩展语法可参见具体工具的使用说明。</p>
+]]></content>
+    </entry>
+</feed>
